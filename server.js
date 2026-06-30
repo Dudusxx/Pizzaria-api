@@ -6,20 +6,20 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Conexão com o Neon (PostgreSQL) via variável de ambiente da Vercel
+
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
 });
 
-// Criação automática das tabelas 
+
 const initDB = async () => {
     await pool.query("CREATE TABLE IF NOT EXISTS clientes (id SERIAL PRIMARY KEY, nome VARCHAR(255))");
     await pool.query("CREATE TABLE IF NOT EXISTS pedidos (id SERIAL PRIMARY KEY, cliente_id INTEGER REFERENCES clientes(id), sabor VARCHAR(255), preco DECIMAL, status VARCHAR(50))");
 };
 initDB();
 
-// POST: Criar Pedido com Lógica de Fila
+// POST: Criar Pedido
 app.post('/pedidos', async (req, res) => {
     const { nome_cliente, sabor, preco } = req.body;
     if (!nome_cliente || !sabor || !preco) return res.status(400).json({ erro: "Dados incompletos!" });
@@ -28,7 +28,7 @@ app.post('/pedidos', async (req, res) => {
         const resultCliente = await pool.query("INSERT INTO clientes (nome) VALUES ($1) RETURNING id", [nome_cliente]);
         const cliente_id = resultCliente.rows[0].id;
 
-        // Verifica se tem pizza na cozinha
+        // Verificar pizza
         const contagem = await pool.query("SELECT COUNT(*) FROM pedidos WHERE status = 'Preparando'");
         const ativos = parseInt(contagem.rows[0].count);
         
@@ -41,7 +41,7 @@ app.post('/pedidos', async (req, res) => {
     }
 });
 
-// GET: Listar Pedidos (Com Múltiplas Ordenações)
+// GET: Listar Pedidos
 app.get('/pedidos', async (req, res) => {
     const { ordenarPor } = req.query;
     let sql = "SELECT p.id, c.nome AS cliente, p.sabor, p.preco, p.status FROM pedidos p JOIN clientes c ON p.cliente_id = c.id";
@@ -86,14 +86,14 @@ app.patch('/pedidos/:id/status', async (req, res) => {
     }
 });
 
-// DELETE: Cancelar o Pedido e Atualizar a Fila
+// DELETE: Cancelar o Pedido
 app.delete('/pedidos/:id', async (req, res) => {
     const { id } = req.params;
 
     try {
         await pool.query("DELETE FROM pedidos WHERE id = $1", [id]);
 
-        // Se cancelar, verifica se a cozinha ficou vazia para puxar o próximo
+        
         const contagem = await pool.query("SELECT COUNT(*) FROM pedidos WHERE status = 'Preparando'");
         const ativos = parseInt(contagem.rows[0].count);
 
@@ -117,5 +117,5 @@ app.delete('/pedidos/:id', async (req, res) => {
     }
 });
 
-// Exportação necessária para a Vercel Serverless
+// Exportação Vercel Serverless
 module.exports = app;
