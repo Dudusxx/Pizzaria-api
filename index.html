@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <title>Pizzaria - Painel Express</title>
     <style>
-      /* Variáveis para facilitar a troca de tema Claro/Escuro */
+      
 :root {
     --bg-color: #f0f2f5;
     --container-bg: #ffffff;
     --text-color: #333333;
     --border-color: #dddddd;
-    --primary-color: #e74c3c; /* Vermelho Pizzaria */
+    --primary-color: #e74c3c; 
     --primary-hover: #c0392b;
     --btn-text: #ffffff;
 }
@@ -22,7 +22,7 @@ body.dark {
     --border-color: #444444;
 }
 
-/* Estilos Gerais */
+
 body {
     background-color: var(--bg-color);
     color: var(--text-color);
@@ -31,7 +31,7 @@ body {
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Container Principal */
+
 .container {
     max-width: 900px;
     margin: 0 auto;
@@ -71,7 +71,7 @@ input:focus, select:focus {
     border-color: var(--primary-color);
 }
 
-/* Botões */
+
 button {
     background-color: var(--primary-color);
     color: var(--btn-text);
@@ -87,7 +87,7 @@ button:hover {
     background-color: var(--primary-hover);
 }
 
-/* Tabela */
+
 table {
     width: 100%;
     border-collapse: collapse;
@@ -113,7 +113,7 @@ td button {
 }
 
 td button:last-child {
-    background-color: #7f8c8d; /* Cinza para o botão cancelar */
+    background-color: #7f8c8d; 
 }
 
 td button:last-child:hover {
@@ -124,9 +124,9 @@ td button:last-child:hover {
 <body id="tema-site" class="light">
     <div class="container">
         <h2>Painel da Pizzaria</h2>
-       <!-- Requisito 5: Local Storage -->
+       
         <button onclick="alternarTema()">Mudar Tema (Local Storage)</button>
-        <!-- Requisito 4: Ordenação -->
+        
         <button onclick="carregarPedidos('ordem')">Ordenar por Ordem de Pedido</button>
         <button onclick="carregarPedidos('preco')">Ordenar Tabela por Preço</button>
         
@@ -164,7 +164,7 @@ td button:last-child:hover {
     <script>
        const API_URL = 'https://pizzaria-api-iota.vercel.app/pedidos';
 
-        // --- Requisito 5: Lógica do Local Storage ---
+        
         const temaSalvo = localStorage.getItem('temaPizza') || 'light';
         document.getElementById('tema-site').className = temaSalvo;
 
@@ -174,7 +174,7 @@ td button:last-child:hover {
             localStorage.setItem('temaPizza', body.className);
         }
 
-        // --- Requisito 2: Validação no Cliente (HTML e JS) ---
+        
         document.getElementById('formPedido').addEventListener('submit', async (e) => {
             e.preventDefault();
             const nome_cliente = document.getElementById('nome').value;
@@ -185,7 +185,7 @@ td button:last-child:hover {
                 return;
             }
 
-            // Definição dos novos preços
+            // preços
             let preco = 0;
             if (sabor === 'Calabresa') preco = 35;
             else if (sabor === 'Marguerita') preco = 40;
@@ -201,7 +201,7 @@ td button:last-child:hover {
             carregarPedidos();
         });
 
-        // --- Requisitos 3 e 4: Métodos HTTP e Ordenação ---
+        
         async function carregarPedidos(ordenar = '') {
             const url = ordenar ? `${API_URL}?ordenarPor=${ordenar}` : API_URL;
             const res = await fetch(url);
@@ -211,14 +211,14 @@ td button:last-child:hover {
             tbody.innerHTML = '';
             
             pedidos.forEach(p => {
-                // Definindo as cores dos 4 status
+                
                 let corStatus = '';
                 if (p.status === 'Em espera') corStatus = 'color: #95a5a6;';
                 else if (p.status === 'Preparando') corStatus = 'color: #e67e22;';
                 else if (p.status === 'Saiu para entrega') corStatus = 'color: #3498db;';
                 else if (p.status === 'Entregue') corStatus = 'color: #2ecc71;';
                 
-                // O botão de avançar só aparece se estiver Preparando ou Saiu para entrega
+                
                 let botaoAvancar = '';
                 if (p.status === 'Preparando' || p.status === 'Saiu para entrega') {
                     botaoAvancar = `<button onclick="atualizarStatus(${p.id}, '${p.status}')">Avançar Status</button>`;
@@ -255,7 +255,7 @@ td button:last-child:hover {
             }
         }
 
-        // --- RESTAURANDO A FUNÇÃO DE CANCELAR ---
+        // --- CANCELAR ---
         async function deletar(id) {
             if(confirm("Tem certeza que deseja cancelar este pedido?")) {
                 await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
@@ -263,7 +263,7 @@ td button:last-child:hover {
             }
         }
 
-        // Carrega a tabela assim que o site abre
+        
         carregarPedidos();
     </script>
 </body>
