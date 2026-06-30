@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Pizzaria - Painel Express</title>
+    <style>
+      /* Variáveis para facilitar a troca de tema Claro/Escuro */
+:root {
+    --bg-color: #f0f2f5;
+    --container-bg: #ffffff;
+    --text-color: #333333;
+    --border-color: #dddddd;
+    --primary-color: #e74c3c; /* Vermelho Pizzaria */
+    --primary-hover: #c0392b;
+    --btn-text: #ffffff;
+}
+
+body.dark {
+    --bg-color: #1e1e24;
+    --container-bg: #2b2b36;
+    --text-color: #f5f6fa;
+    --border-color: #444444;
+}
+
+/* Estilos Gerais */
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 20px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Container Principal */
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    background-color: var(--container-bg);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease;
+}
+
+h2 {
+    margin-top: 0;
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 10px;
+    display: inline-block;
+}
+
+/* Formulário e Inputs */
+#formPedido {
+    display: flex;
+    gap: 15px;
+    margin: 20px 0;
+    align-items: center;
+}
+
+input, select {
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    outline: none;
+    flex: 1;
+}
+
+input:focus, select:focus {
+    border-color: var(--primary-color);
+}
+
+/* Botões */
+button {
+    background-color: var(--primary-color);
+    color: var(--btn-text);
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+}
+
+button:hover {
+    background-color: var(--primary-hover);
+}
+
+/* Tabela */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+th {
+    background-color: var(--bg-color);
+    font-weight: 600;
+}
+
+/* Botões de Ação na Tabela */
+td button {
+    padding: 6px 10px;
+    font-size: 0.9em;
+    margin-right: 5px;
+}
+
+td button:last-child {
+    background-color: #7f8c8d; /* Cinza para o botão cancelar */
+}
+
+td button:last-child:hover {
+    background-color: #95a5a6;
+}
+    </style>
+</head>
+<body id="tema-site" class="light">
+    <div class="container">
+        <h2>Painel da Pizzaria</h2>
+       <!-- Requisito 5: Local Storage -->
+        <button onclick="alternarTema()">Mudar Tema (Local Storage)</button>
+        <!-- Requisito 4: Ordenação -->
+        <button onclick="carregarPedidos('ordem')">Ordenar por Ordem de Pedido</button>
+        <button onclick="carregarPedidos('preco')">Ordenar Tabela por Preço</button>
+        
+        <hr>
+        
+        <form id="formPedido">
+            <input type="text" id="nome" placeholder="Nome do Cliente">
+            <select id="sabor">
+    <option value="">Selecione a Pizza</option>
+    <option value="Calabresa">Calabresa (R$ 35,00)</option>
+    <option value="Marguerita">Marguerita (R$ 40,00)</option>
+    <option value="Frango com Catupiry">Frango c/ Catupiry (R$ 42,00)</option>
+    <option value="Quatro Queijos">Quatro Queijos (R$ 45,00)</option>
+    <option value="Portuguesa">Portuguesa (R$ 45,00)</option>
+    <option value="Pepperoni">Pepperoni (R$ 48,00)</option>
+
+            </select>
+            <button type="submit">Fazer Pedido</button>
+        </form>
+
+        <table id="tabelaPedidos">
+            <thead>
+                <tr>
+                    <th>Cliente</th>
+                    <th>Sabor</th>
+                    <th>Preço (R$)</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+       const API_URL = 'http://localhost:3000/pedidos';
+
+        // --- Requisito 5: Lógica do Local Storage ---
+        const temaSalvo = localStorage.getItem('temaPizza') || 'light';
+        document.getElementById('tema-site').className = temaSalvo;
+
+        function alternarTema() {
+            const body = document.getElementById('tema-site');
+            body.className = body.className === 'light' ? 'dark' : 'light';
+            localStorage.setItem('temaPizza', body.className);
+        }
+
+        // --- Requisito 2: Validação no Cliente (HTML e JS) ---
+        document.getElementById('formPedido').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nome_cliente = document.getElementById('nome').value;
+            const sabor = document.getElementById('sabor').value;
+            
+            if(!nome_cliente || !sabor) {
+                alert('Validação do Cliente: Nome e Sabor são obrigatórios!');
+                return;
+            }
+
+            // Definição dos novos preços
+            let preco = 0;
+            if (sabor === 'Calabresa') preco = 35;
+            else if (sabor === 'Marguerita') preco = 40;
+            else if (sabor === 'Frango com Catupiry') preco = 42;
+            else if (sabor === 'Quatro Queijos' || sabor === 'Portuguesa') preco = 45;
+            else if (sabor === 'Pepperoni') preco = 48;
+
+            await fetch(API_URL, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ nome_cliente, sabor, preco })
+            });
+            carregarPedidos();
+        });
+
+        // --- Requisitos 3 e 4: Métodos HTTP e Ordenação ---
+        async function carregarPedidos(ordenar = '') {
+            const url = ordenar ? `${API_URL}?ordenarPor=${ordenar}` : API_URL;
+            const res = await fetch(url);
+            const pedidos = await res.json();
+            
+            const tbody = document.querySelector('tbody');
+            tbody.innerHTML = '';
+            
+            pedidos.forEach(p => {
+                // Definindo as cores dos 4 status
+                let corStatus = '';
+                if (p.status === 'Em espera') corStatus = 'color: #95a5a6;';
+                else if (p.status === 'Preparando') corStatus = 'color: #e67e22;';
+                else if (p.status === 'Saiu para entrega') corStatus = 'color: #3498db;';
+                else if (p.status === 'Entregue') corStatus = 'color: #2ecc71;';
+                
+                // O botão de avançar só aparece se estiver Preparando ou Saiu para entrega
+                let botaoAvancar = '';
+                if (p.status === 'Preparando' || p.status === 'Saiu para entrega') {
+                    botaoAvancar = `<button onclick="atualizarStatus(${p.id}, '${p.status}')">Avançar Status</button>`;
+                }
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${p.cliente}</td>
+                        <td>${p.sabor}</td>
+                        <td>${p.preco}</td>
+                        <td style="${corStatus}"><strong>${p.status}</strong></td>
+                        <td>
+                            ${botaoAvancar}
+                            <button onclick="deletar(${p.id})">Cancelar</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function atualizarStatus(id, statusAtual) {
+            let novoStatus = '';
+            
+            if (statusAtual === 'Preparando') novoStatus = 'Saiu para entrega';
+            else if (statusAtual === 'Saiu para entrega') novoStatus = 'Entregue';
+
+            if (novoStatus) {
+                await fetch(`${API_URL}/${id}/status`, {
+                    method: 'PATCH',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ status: novoStatus })
+                });
+                carregarPedidos();
+            }
+        }
+
+        // --- RESTAURANDO A FUNÇÃO DE CANCELAR ---
+        async function deletar(id) {
+            if(confirm("Tem certeza que deseja cancelar este pedido?")) {
+                await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                carregarPedidos();
+            }
+        }
+
+        // Carrega a tabela assim que o site abre
+        carregarPedidos();
+    </script>
+</body>
+</html>
